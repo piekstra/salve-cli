@@ -602,7 +602,8 @@ fn document_of(f: &Fetchable) -> Document {
     let mut d = Document::new(f.id.clone(), f.name.clone());
     d.date = f.date.clone();
     d.category = Some(f.category.into());
-    d.file = Some(f.name.clone());
+    // The name `documents download` saves it under.
+    d.file = Some(saved_name(f));
     d
 }
 
@@ -753,7 +754,9 @@ fn documents_download(ctx: &Ctx, args: &DownloadArgs) -> Result<(), CliError> {
                 Ok(b) => b,
                 Err(e) if e.is_auth() => return Err(e),
                 Err(e) => {
-                    let code = if e.exit_code() == 4 {
+                    let code = if e.reason() == Some(pk_cli_core::Reason::BadRequest) {
+                        pk_cli_documents::SKIP_VERIFY_FAILED
+                    } else if e.exit_code() == 4 {
                         pk_cli_documents::SKIP_NO_FILE
                     } else {
                         pk_cli_documents::SKIP_UPSTREAM
@@ -800,6 +803,9 @@ fn documents_download(ctx: &Ctx, args: &DownloadArgs) -> Result<(), CliError> {
         if ctx.json() {
             output::json(&serde_json::to_value(&batch).unwrap_or_default());
         } else {
+            for s in &batch.skipped {
+                ctx.note(&format!("skipped {}: {}", s.id, s.reason));
+            }
             ctx.note(&format!(
                 "saved {} document(s) to {}{}",
                 batch.count,
@@ -954,5 +960,6 @@ mod tests {
             ..f
         };
         assert_eq!(saved_name(&typed), "Treatment plan.pdf");
+        assert_eq!(document_of(&typed).file.as_deref(), Some("Treatment plan.pdf"));
     }
 }

@@ -511,7 +511,10 @@ mod tests {
         assert_eq!(datetime("2025-03-04").as_deref(), Some("2025-03-04"));
         // Unix seconds, and milliseconds.
         assert_eq!(datetime("1111111111").as_deref(), Some("2005-03-18T01:58:31Z"));
-        assert_eq!(datetime(&format!("{}000", "1111111111")).as_deref(), Some("2005-03-18T01:58:31Z"));
+        assert_eq!(
+            datetime(&format!("{}000", "1111111111")).as_deref(),
+            Some("2005-03-18T01:58:31Z")
+        );
         assert_eq!(datetime("0001-01-01T00:00:00Z"), None);
         assert_eq!(datetime("not a date"), None);
         assert_eq!(day("2025-03-04T23:20:30-05:00").as_deref(), Some("2025-03-04"));

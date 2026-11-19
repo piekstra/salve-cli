@@ -253,7 +253,10 @@ pub fn login(
                             parked.sent_to_hint.as_deref().unwrap_or("the account's phone")
                         )
                     } else {
-                        e.message().to_string()
+                        // A refused code's message ends with the retry
+                        // command; the remedy below says it with the profile.
+                        let m = e.message();
+                        m.split_once("; retry with").map_or(m, |(said, _)| said).to_string()
                     };
                     CliError::Auth(message)
                         .because(e.reason().unwrap_or(Reason::CredentialRefused))
